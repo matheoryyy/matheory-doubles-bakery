@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Matheory Doubles & Doubles+1魔法烘焙屋🐰</title>
+  <style>
+    :root {
+      --primary: #FF7A00;
+      --primary-dark: #E06300;
+      --secondary: #2B8A3E;
+      --bg-sky: #E3F6FF;
+      --bg-grass-light: #8CE99A;
+      --bg-grass-dark: #51CF66;
+      --text-main: #212529;
+      --text-muted: #6C757D;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--bg-sky) 0%, #D0EBFF 45%, var(--bg-grass-light) 45%, var(--bg-grass-dark) 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 12px;
+      color: var(--text-main);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 遊戲主背景裝飾（天空雲朵與草地小花，保持系列一致） */
+    .bg-scenery {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-cloud {
+      position: absolute;
+      font-size: 38px;
+      opacity: 0.75;
+    }
+
+    .bg-flower {
+      position: absolute;
+      font-size: 22px;
+      opacity: 0.85;
+    }
+
+    /* 頂部品牌與功能列 */
+    .top-bar {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 540px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.94);
+      padding: 8px 14px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      gap: 8px;
+    }
+
+    .brand-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-logo {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 0.8px;
+      padding: 4px 9px;
+      border-radius: 8px;
+    }
+
+    .game-title-small {
+      font-weight: 800;
+      font-size: 14px;
+      color: #2B2D42;
+    }
+
+    .btn-switch {
+      background: #F1F3F5;
+      border: none;
+      color: #495057;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-switch:active {
+      background: #DEE2E6;
+    }
+
+    /* 遊戲主容器 */
+    .game-container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 540px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 狀態儀表板 */
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .hud-box {
+      background: #FFFFFF;
+      border-radius: 14px;
+      padding: 8px 10px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+    }
+
+    .hud-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .hud-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: #212529;
+    }
+
+    .hud-value.timer-warn {
+      color: #E03131;
+      animation: pulse 0.6s infinite alternate;
+    }
+
+    .hud-value.combo-active {
+      color: var(--primary);
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.12); }
+    }
+
+    /* 烘焙題目與烤盤顯示看板 */
+    .bakery-board {
+      background: #FFF9DB;
+      border: 4px solid #FCC419;
+      border-radius: 22px;
+      padding: 14px 14px 12px;
+      text-align: center;
+      box-shadow: 0 6px 16px rgba(250, 176, 5, 0.25);
+      position: relative;
+    }
+
+    .level-tag {
+      display: inline-block;
+      background: #FAB005;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 12px;
+      border-radius: 99px;
+      margin-bottom: 8px;
+    }
+
+    .customer-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .customer-avatar {
+      font-size: 46px;
+      line-height: 1;
+      animation: hop 1.8s infinite ease-in-out;
+    }
+
+    @keyframes hop {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .order-bubble {
+      background: #FFFFFF;
+      border: 3px solid #FCC419;
+      border-radius: 16px;
+      padding: 6px 20px;
+      font-size: 34px;
+      font-weight: 900;
+      color: #2B2D42;
+      letter-spacing: 1px;
+      box-shadow: 0 3px 0 #FAB005;
+    }
+
+    .tray-box {
+      background: #FFF4E6;
+      border: 2.5px dashed #FFA94D;
+      border-radius: 16px;
+      padding: 10px 8px;
+      margin-bottom: 8px;
+    }
+
+    .tray-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #D9480F;
+      margin-bottom: 4px;
+    }
+
+    .tray-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 28px;
+      margin: 4px 0;
+      font-size: 21px;
+    }
+
+    .hint-bar {
+      font-size: 13px;
+      font-weight: 800;
+      color: #2B8A3E;
+      min-height: 20px;
+    }
+
+    /* 4 個大答案按鈕區 */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      background: rgba(43, 138, 62, 0.22);
+      padding: 14px;
+      border-radius: 24px;
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .opt-btn {
+      background: #FFFFFF;
+      color: #212529;
+      border: 3px solid #E9ECEF;
+      border-radius: 18px;
+      padding: 16px;
+      font-size: 30px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #CED4DA;
+      transition: transform 0.1s;
+    }
+
+    .opt-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #CED4DA;
+    }
+
+    .opt-btn.correct {
+      background: #69DB7C;
+      color: #fff;
+      border-color: #2B8A3E;
+      box-shadow: 0 5px 0 #2B8A3E;
+    }
+
+    .opt-btn.wrong {
+      background: #FF8787;
+      color: #fff;
+      border-color: #C92A2A;
+      box-shadow: 0 5px 0 #C92A2A;
+    }
+
+    /* 飄浮得分提示 */
+    .float-feedback {
+      position: fixed;
+      font-size: 24px;
+      font-weight: 900;
+      pointer-events: none;
+      z-index: 999;
+      animation: floatUp 0.65s ease-out forwards;
+      text-shadow: 0 2px 4px rgba(255,255,255,0.9);
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(0.9); }
+      100% { opacity: 0; transform: translateY(-45px) scale(1.2); }
+    }
+
+    /* 彈窗遮罩 */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(33, 37, 41, 0.72);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 28px;
+      padding: 20px 18px;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+      animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.88); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* 專屬魔法烘焙屋插畫封面（粉色條紋遮陽篷 + 廚師與兔仔打橫並排 + 雙層餅乾草莓烤盤） */
+    .bakery-cover {
+      background: linear-gradient(180deg, #FFF0F6 0%, #FFF9DB 100%);
+      border-radius: 22px;
+      border: 3px solid #FAA2C1;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(230, 73, 128, 0.14);
+      position: relative;
+    }
+
+    /* 烘焙屋粉色奶油條紋屋簷 */
+    .bakery-awning {
+      height: 22px;
+      background: repeating-linear-gradient(
+        90deg,
+        #FF8787 0px,
+        #FF8787 22px,
+        #FFFFFF 22px,
+        #FFFFFF 44px
+      );
+      border-bottom: 3px solid #FA5252;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .bakery-cover-body {
+      padding: 12px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bakery-chef-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    /* 廚師和兔仔打橫並排 */
+    .chef-duo-row {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 4px;
+      animation: bounceChef 1.8s infinite ease-in-out;
+    }
+
+    .chef-character {
+      font-size: 50px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.16));
+    }
+
+    .bunny-character {
+      font-size: 50px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.16));
+    }
+
+    @keyframes bounceChef {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* 迷你雙層對稱烤盤插畫展示 */
+    .mini-tray-illustration {
+      background: #F8F0E5;
+      border: 2.5px solid #D4A373;
+      border-radius: 14px;
+      padding: 7px 12px;
+      box-shadow: 0 3px 0 #BC8A5F;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mini-tray-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .bakery-sparkles {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      font-size: 18px;
+    }
+
+    .modal-brand {
+      display: inline-block;
+      background: #FFF4E6;
+      color: var(--primary);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-bottom: 6px;
+    }
+
+    .modal-title {
+      font-size: 21px;
+      font-weight: 900;
+      color: #212529;
+      margin-bottom: 5px;
+      line-height: 1.3;
+    }
+
+    .modal-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.45;
+    }
+
+    .level-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .level-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 11px 14px;
+      border: 2px solid #E9ECEF;
+      border-radius: 16px;
+      background: #F8F9FA;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      gap: 10px;
+    }
+
+    .level-btn:hover, .level-btn:active {
+      border-color: var(--primary);
+      background: #FFF4E6;
+      transform: translateY(-1px);
+    }
+
+    .level-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .level-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .icon-lv1 { background: #E7F5FF; }
+    .icon-lv2 { background: #FFF0F6; }
+    .icon-lv3 { background: #EBFBEE; }
+
+    .level-info-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #212529;
+    }
+
+    .level-info-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .level-arrow {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    /* 結算數據格 */
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 14px 0 18px;
+    }
+
+    .result-item {
+      background: #F8F9FA;
+      padding: 12px 6px;
+      border-radius: 14px;
+    }
+
+    .result-num {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .result-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 12px rgba(255, 122, 0, 0.35);
+    }
+
+    .btn-primary:active {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #DEE2E6;
+      border-radius: 14px;
+      background: #FFFFFF;
+      color: #495057;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 遊戲主畫面背景花草雲朵裝飾 -->
+  <div class="bg-scenery" aria-hidden="true">
+    <span class="bg-cloud" style="top: 4%; left: 6%;">☁️</span>
+    <span class="bg-cloud" style="top: 10%; right: 8%;">☁️</span>
+    <span class="bg-flower" style="bottom: 4%; left: 5%;">🌱🌼🌿</span>
+    <span class="bg-flower" style="bottom: 3%; right: 6%;">🌷🌱🌸</span>
+    <span class="bg-flower" style="bottom: 14%; left: 3%;">🍀</span>
+    <span class="bg-flower" style="bottom: 16%; right: 4%;">🌻</span>
+  </div>
+
+  <!-- 頂部導覽列 -->
+  <div class="top-bar">
+    <div class="brand-badge">
+      <span class="brand-logo">MATHEORY</span>
+      <span class="game-title-small">Matheory Doubles & Doubles+1魔法烘焙屋🐰</span>
+    </div>
+    <button class="btn-switch" id="btnSwitchMode">切換菜單</button>
+  </div>
+
+  <!-- 遊戲主畫面 -->
+  <div class="game-container">
+    <div class="hud">
+      <div class="hud-box">
+        <div class="hud-label">⏱️ 剩餘時間</div>
+        <div class="hud-value" id="timerDisplay">60s</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-label">⭐ 目前得分</div>
+        <div class="hud-value" id="scoreDisplay">0</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-label">🔥 連擊 Combo</div>
+        <div class="hud-value" id="comboDisplay">0</div>
+      </div>
+    </div>
+
+    <div class="bakery-board">
+      <div class="level-tag" id="currentLevelTag">菜單 1：Doubles 餅乾</div>
+      <div class="customer-row">
+        <div class="customer-avatar" id="custAvatar">🐰</div>
+        <div class="order-bubble" id="qText">7 + 8 = ?</div>
+      </div>
+      <div class="tray-box">
+        <div class="tray-label">上下兩層對稱烤盤・雙倍餅乾 + 草莓點綴</div>
+        <div class="tray-row" id="rowTop"></div>
+        <div class="tray-row" id="rowBottom"></div>
+      </div>
+      <div class="hint-bar" id="hintText">上下兩排一樣多，看看有沒有多 1 顆草莓！</div>
+    </div>
+
+    <div class="options-grid" id="optGrid"></div>
+  </div>
+
+  <!-- 開始與難度選擇彈窗（移除最左側蛋糕，改為廚師和兔仔打橫並排） -->
+  <div class="overlay" id="startOverlay">
+    <div class="modal-card">
+      <div class="bakery-cover">
+        <div class="bakery-awning"></div>
+        <div class="bakery-cover-body">
+          <div class="bakery-chef-stage">
+            <div class="chef-duo-row">
+              <span class="chef-character">👩‍🍳</span>
+              <span class="bunny-character">🐰</span>
+            </div>
+            <div class="mini-tray-illustration">
+              <div class="mini-tray-row">🍪🍪🍪🍪</div>
+              <div class="mini-tray-row">🍪🍪🍪🍪🍓</div>
+            </div>
+          </div>
+          <div class="bakery-sparkles">
+            <span>✨</span>
+            <span>🥐</span>
+            <span>🍰</span>
+            <span>🍩</span>
+            <span>✨</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-brand">✨ MATHEORY 數理邏輯訓練 ✨</div>
+      <h1 class="modal-title">Matheory Doubles & Doubles+1魔法烘焙屋🐰</h1>
+      <p class="modal-subtitle">限時 60 秒！幫小動物客人烤出成雙成對的餅乾，若有 +1 草莓記得加上去吧！</p>
+
+      <div class="level-list">
+        <button class="level-btn" data-mode="double">
+          <div class="level-left">
+            <div class="level-icon icon-lv1">🍪</div>
+            <div>
+              <div class="level-info-title">菜單 1：Doubles 餅乾</div>
+              <div class="level-info-desc">上下兩排完全一樣多，1+1 到 10+10</div>
+            </div>
+          </div>
+          <span class="level-arrow">開始</span>
+        </button>
+        <button class="level-btn" data-mode="plus1">
+          <div class="level-left">
+            <div class="level-icon icon-lv2">🍓</div>
+            <div>
+              <div class="level-info-title">菜單 2：Doubles+1 草莓</div>
+              <div class="level-info-desc">雙倍餅乾再加 1 顆草莓，如 7+8、9+10</div>
+            </div>
+          </div>
+          <span class="level-arrow">開始</span>
+        </button>
+        <button class="level-btn" data-mode="mixed">
+          <div class="level-left">
+            <div class="level-icon icon-lv3">🏆</div>
+            <div>
+              <div class="level-info-title">菜單 3：主廚綜合訂單</div>
+              <div class="level-info-desc">Doubles 與 Doubles+1 隨機點餐</div>
+            </div>
+          </div>
+          <span class="level-arrow">挑戰</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結算畫面彈窗 -->
+  <div class="overlay hidden" id="endOverlay">
+    <div class="modal-card">
+      <div style="font-size: 48px; margin-bottom: 4px;">🎉🐰🏆</div>
+      <div class="modal-brand">MATHEORY 挑戰結算</div>
+      <h2 class="modal-title" id="resultRankTitle">心算小達人！</h2>
+      <p class="modal-subtitle" id="resultLevelName">Matheory Doubles & Doubles+1魔法烘焙屋🐰</p>
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-num" id="finalScore">0</div>
+          <div class="result-label">總得分</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num" id="finalCorrect">0</div>
+          <div class="result-label">完成訂單</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num" id="finalMaxCombo">0</div>
+          <div class="result-label">最高連擊</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnReplay">🔄 再玩一次</button>
+      <button class="btn-secondary" id="btnChooseOther">選擇其他菜單</button>
+    </div>
+  </div>
+
+  <script>
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playTone(type) {
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'hit') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.14);
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+          osc.start(now);
+          osc.stop(now + 0.16);
+        } else if (type === 'miss') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.linearRampToValueAtTime(120, now + 0.2);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'tick') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(700, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        }
+      } catch (e) {}
+    }
+
+    const MODE_NAMES = {
+      double: '菜單 1：Doubles 餅乾',
+      plus1: '菜單 2：Doubles+1 草莓',
+      mixed: '菜單 3：主廚綜合訂單'
+    };
+
+    const ANIMALS = ['🐰', '🐻', '🐱', '🐶', '🦊', '🐼', '🐨'];
+    let mode = 'mixed';
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let correctCount = 0;
+    let timeLeft = 60;
+    let isPlaying = false;
+    let currentQ = null;
+    let timerInterval = null;
+    let locked = false;
+
+    const timerDisplay = document.getElementById('timerDisplay');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const comboDisplay = document.getElementById('comboDisplay');
+    const currentLevelTag = document.getElementById('currentLevelTag');
+    const startOverlay = document.getElementById('startOverlay');
+    const endOverlay = document.getElementById('endOverlay');
+
+    function generateDoubleQuestion(m) {
+      let isDouble = true;
+      if (m === 'double') isDouble = true;
+      else if (m === 'plus1') isDouble = false;
+      else isDouble = Math.random() < 0.45;
+
+      if (isDouble) {
+        const n = Math.floor(Math.random() * 10) + 1;
+        return {
+          a: n,
+          b: n,
+          ans: n + n,
+          base: n,
+          isPlusOne: false,
+          text: `${n} + ${n} = ?`,
+          hint: `雙倍數：${n} + ${n} = ${n * 2}`
+        };
+      } else {
+        const n = Math.floor(Math.random() * 9) + 1;
+        const swap = Math.random() < 0.5;
+        const a = swap ? n + 1 : n;
+        const b = swap ? n : n + 1;
+        return {
+          a,
+          b,
+          ans: a + b,
+          base: n,
+          isPlusOne: true,
+          text: `${a} + ${b} = ?`,
+          hint: `拆解技巧：先算 ${n} + ${n} = ${n * 2}，再 + 1 = ${n * 2 + 1}`
+        };
+      }
+    }
+
+    function generateOptions(correctAns, base) {
+      const set = new Set([correctAns]);
+      const smart = [base * 2, base * 2 + 1, correctAns - 1, correctAns + 1, correctAns - 2, correctAns + 2];
+      for (const v of smart) {
+        if (v >= 2 && v <= 20 && v !== correctAns && set.size < 4) {
+          set.add(v);
+        }
+      }
+      while (set.size < 4) {
+        const r = Math.floor(Math.random() * 19) + 2;
+        if (r !== correctAns) set.add(r);
+      }
+      return Array.from(set).sort(() => Math.random() - 0.5);
+    }
+
+    function showFloatFeedback(x, y, text, color) {
+      const el = document.createElement('div');
+      el.className = 'float-feedback';
+      el.textContent = text;
+      el.style.left = `${x - 24}px`;
+      el.style.top = `${y - 20}px`;
+      el.style.color = color;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 650);
+    }
+
+    function renderQuestion() {
+      if (!isPlaying) return;
+      locked = false;
+      currentQ = generateDoubleQuestion(mode);
+      document.getElementById('custAvatar').textContent = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+      document.getElementById('qText').textContent = currentQ.text;
+
+      const topCookies = '🍪'.repeat(currentQ.base);
+      const botCookies = '🍪'.repeat(currentQ.base) + (currentQ.isPlusOne ? '🍓' : '');
+      document.getElementById('rowTop').textContent = topCookies;
+      document.getElementById('rowBottom').textContent = botCookies;
+      document.getElementById('hintText').textContent = currentQ.isPlusOne
+        ? `兩排各 ${currentQ.base} 塊餅乾 + 1 顆草莓`
+        : `上下兩排各 ${currentQ.base} 塊餅乾`;
+
+      const opts = generateOptions(currentQ.ans, currentQ.base);
+      const grid = document.getElementById('optGrid');
+      grid.innerHTML = '';
+      opts.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.textContent = val;
+        btn.addEventListener('pointerdown', (e) => checkAnswer(val, btn, e));
+        grid.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(val, btn, event) {
+      if (!isPlaying || locked) return;
+      const clientX = event.clientX || (event.touches && event.touches[0].clientX) || window.innerWidth / 2;
+      const clientY = event.clientY || (event.touches && event.touches[0].clientY) || window.innerHeight / 2;
+
+      if (val === currentQ.ans) {
+        locked = true;
+        btn.classList.add('correct');
+        playTone('hit');
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        correctCount++;
+        const earned = 10 + Math.min(combo * 2, 20);
+        score += earned;
+        document.getElementById('hintText').textContent = `出爐啦！${currentQ.hint}`;
+        updateHUD();
+        showFloatFeedback(clientX, clientY, `+${earned}`, '#2B8A3E');
+        setTimeout(renderQuestion, 420);
+      } else {
+        btn.classList.add('wrong');
+        playTone('miss');
+        combo = 0;
+        score = Math.max(0, score - 5);
+        updateHUD();
+        showFloatFeedback(clientX, clientY, '-5', '#E03131');
+      }
+    }
+
+    function updateHUD() {
+      timerDisplay.textContent = `${timeLeft}s`;
+      timerDisplay.classList.toggle('timer-warn', timeLeft <= 10 && isPlaying);
+      scoreDisplay.textContent = score;
+      comboDisplay.textContent = combo;
+      comboDisplay.classList.toggle('combo-active', combo >= 3);
+    }
+
+    function startGame(m) {
+      mode = m;
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      correctCount = 0;
+      timeLeft = 60;
+      isPlaying = true;
+
+      currentLevelTag.textContent = MODE_NAMES[m];
+      startOverlay.classList.add('hidden');
+      endOverlay.classList.add('hidden');
+      updateHUD();
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 10 && timeLeft > 0) playTone('tick');
+        updateHUD();
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+
+      renderQuestion();
+    }
+
+    function endGame() {
+      isPlaying = false;
+      clearInterval(timerInterval);
+
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('finalCorrect').textContent = correctCount;
+      document.getElementById('finalMaxCombo').textContent = maxCombo;
+      document.getElementById('resultLevelName').textContent = `Matheory Doubles & Doubles+1魔法烘焙屋🐰・${MODE_NAMES[mode]}`;
+
+      let rank = '繼續加油，多練習會更快！';
+      if (score >= 250) rank = '超級心算神童！太厲害了！';
+      else if (score >= 150) rank = 'Matheory 心算高手！';
+      else if (score >= 80) rank = '表現很棒！反應越來越快囉！';
+      document.getElementById('resultRankTitle').textContent = rank;
+
+      endOverlay.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('.level-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        startGame(btn.getAttribute('data-mode'));
+      });
+    });
+
+    document.getElementById('btnReplay').addEventListener('click', () => startGame(mode));
+    document.getElementById('btnChooseOther').addEventListener('click', () => {
+      endOverlay.classList.add('hidden');
+      startOverlay.classList.remove('hidden');
+    });
+    document.getElementById('btnSwitchMode').addEventListener('click', () => {
+      isPlaying = false;
+      clearInterval(timerInterval);
+      startOverlay.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
